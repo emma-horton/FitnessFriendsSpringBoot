@@ -1,7 +1,7 @@
 package com.fitnessfriends.service;
 
 import com.fitnessfriends.entity.ActivityData;
-import com.fitnessfriends.repository.ActivityDataRepository;
+import com.fitnessfriends.entity.StravaAccount;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,20 +11,33 @@ import java.util.List;
 public class ActivityDataService {
 
     @Autowired
-    private ActivityDataRepository activityDataRepository;
+    private StravaAccountService stravaAccountService;
 
     // Retrieve all activities for a specific user
     public List<ActivityData> getActivitiesByUserId(int userId) {
-        return activityDataRepository.findByUserId(userId);
+        // Fetch the Strava account for the user
+        StravaAccount stravaAccount = stravaAccountService.getStravaAccountByUserId(userId);
+        if (stravaAccount == null) {
+            throw new IllegalArgumentException("No Strava account linked for user with ID: " + userId);
+        }
+
+        // Use the access token to fetch activities from Strava
+        return stravaAccountService.fetchActivitiesFromStrava(stravaAccount.getAccessToken());
     }
 
     // Retrieve activities by type (e.g., "Running", "Cycling")
-    public List<ActivityData> getActivitiesByType(String activityType) {
-        return activityDataRepository.findByActivityType(activityType);
+    public List<ActivityData> getActivitiesByType(int userId, String activityType) {
+        // Fetch all activities for the user
+        List<ActivityData> activities = getActivitiesByUserId(userId);
+
+        // Filter activities by type
+        return activities.stream()
+                .filter(activity -> activity.getActivityType().equalsIgnoreCase(activityType))
+                .toList();
     }
 
-    // Log a new activity
+    // Log a new activity (if needed, this could be extended to interact with Strava's API)
     public ActivityData logActivity(ActivityData activity) {
-        return activityDataRepository.save(activity);
+        throw new UnsupportedOperationException("Logging activities is not supported via Strava API.");
     }
 }

@@ -1,29 +1,23 @@
 package com.fitnessfriends.entity;
 
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@Entity
-@Table(name = "ActivityData")
 public class ActivityData {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty("id")
     private int dataId;
 
-    @Column(nullable = false)
-    private int userId;
-
-    @Column(nullable = false)
+    @JsonProperty("start_date")
     private String activityDate;
 
-    @Column(nullable = false)
+    @JsonProperty("type")
     private String activityType;
 
-    @Column(nullable = false)
-    private float activityDuration;
-
-    @Column(nullable = false)
+    @JsonProperty("distance")
     private float activityDistance;
+
+    @JsonProperty("elapsed_time")
+    private float activityDuration;
 
     // Getters and Setters
     public int getDataId() {
@@ -32,14 +26,6 @@ public class ActivityData {
 
     public void setDataId(int dataId) {
         this.dataId = dataId;
-    }
-
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
     }
 
     public String getActivityDate() {
@@ -58,14 +44,6 @@ public class ActivityData {
         this.activityType = activityType;
     }
 
-    public float getActivityDuration() {
-        return activityDuration;
-    }
-
-    public void setActivityDuration(float activityDuration) {
-        this.activityDuration = activityDuration;
-    }
-
     public float getActivityDistance() {
         return activityDistance;
     }
@@ -74,7 +52,13 @@ public class ActivityData {
         this.activityDistance = activityDistance;
     }
 
-    // New method to dynamically return a value based on the metric
+    public float getActivityDuration() {
+        return activityDuration;
+    }
+
+    public void setActivityDuration(float activityDuration) {
+        this.activityDuration = activityDuration;
+    }
     public float getValue(String metric) {
         switch (metric.toLowerCase()) {
             case "distance":
@@ -84,5 +68,16 @@ public class ActivityData {
             default:
                 throw new IllegalArgumentException("Invalid metric: " + metric);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "ActivityData{" +
+                "dataId=" + dataId +
+                ", activityDate='" + activityDate + '\'' +
+                ", activityType='" + activityType + '\'' +
+                ", activityDistance=" + activityDistance +
+                ", activityDuration=" + activityDuration +
+                '}';
     }
 }

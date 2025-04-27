@@ -20,9 +20,11 @@ public class ActivityDataController {
         return ResponseEntity.ok(activityDataService.getActivitiesByUserId(userId));
     }
 
-    @GetMapping("/type/{activityType}")
-    public ResponseEntity<List<ActivityData>> getActivitiesByType(@PathVariable String activityType) {
-        return ResponseEntity.ok(activityDataService.getActivitiesByType(activityType));
+    @GetMapping("/{userId}/type/{activityType}")
+    public ResponseEntity<List<ActivityData>> getActivitiesByType(
+            @PathVariable int userId,
+            @PathVariable String activityType) {
+        return ResponseEntity.ok(activityDataService.getActivitiesByType(userId, activityType));
     }
 
     @PostMapping
