@@ -73,4 +73,16 @@ public class ActivityData {
     public void setActivityDistance(float activityDistance) {
         this.activityDistance = activityDistance;
     }
+
+    // New method to dynamically return a value based on the metric
+    public float getValue(String metric) {
+        switch (metric.toLowerCase()) {
+            case "distance":
+                return getActivityDistance();
+            case "duration":
+                return getActivityDuration();
+            default:
+                throw new IllegalArgumentException("Invalid metric: " + metric);
+        }
+    }
 }

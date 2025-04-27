@@ -29,4 +29,7 @@ public class UserService {
         }
         throw new IllegalArgumentException("Invalid username or password");
     }
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
 }

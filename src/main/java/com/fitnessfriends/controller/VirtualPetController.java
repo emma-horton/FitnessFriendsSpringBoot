@@ -16,8 +16,9 @@ public class VirtualPetController {
     private VirtualPetService virtualPetService;
 
     @GetMapping("/{userId}")
-    public ResponseEntity<List<VirtualPet>> getPetsByUserId(@PathVariable int userId) {
-        return ResponseEntity.ok(virtualPetService.getPetsByUserId(userId));
+    public ResponseEntity<VirtualPet> getPetByUserId(@PathVariable int userId) {
+        VirtualPet pet = virtualPetService.getPetWithHealthByUserId(userId);
+        return ResponseEntity.ok(pet);
     }
 
     @PostMapping
