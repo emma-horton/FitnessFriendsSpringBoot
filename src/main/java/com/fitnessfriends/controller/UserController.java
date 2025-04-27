@@ -7,15 +7,19 @@ import com.fitnessfriends.service.UserService;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.net.URLEncoder;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     private UserService userService;
@@ -28,8 +32,10 @@ public class UserController {
             // Register the user
             User registeredUser = userService.registerUser(user.getUsername(), user.getPassword());
 
-            // Use the username directly as the state parameter (no encoding needed)
+            // Encode the username as the state parameter
             String state = registeredUser.getUsername();
+            String dummyData = "redirect";
+            logger.debug("Username: {}", state);
 
             // Redirect the user to the Strava authorization page
             String stravaAuthUrl = "https://www.strava.com/oauth/authorize" +
@@ -37,7 +43,8 @@ public class UserController {
                     "&redirect_uri=http://localhost:8080/api/users/strava/callback" +
                     "&response_type=code" +
                     "&scope=read_all,activity:read_all" +
-                    "&state=" + state;
+                    "&state=" + state +
+                    "&dummyData=" + dummyData;
 
             return ResponseEntity.ok("User registered successfully! Please authorize your Strava account: " + stravaAuthUrl);
         } catch (IllegalArgumentException e) {
@@ -50,8 +57,10 @@ public class UserController {
             @RequestParam("code") String authorizationCode,
             @RequestParam("state") String state) {
         try {
+            logger.debug("Recieved username: {}", state);
             // Decode the state parameter to get the username
             String username = URLDecoder.decode(state, StandardCharsets.UTF_8);
+            logger.debug("Decoded username: {}", state);
 
             // Find the user by username
             User user = userService.findByUsername(username);
