@@ -20,7 +20,7 @@ public class VirtualPet {
     private String healthStatus;
 
     @ManyToOne // Many pets can belong to one user
-    @JoinColumn(name = "userId", nullable = false) // Foreign key to the "Users" table
+    @JoinColumn(name = "userId", nullable = false, unique = true) // Foreign key to the "Users" table
     private User user;
 
     // Getters and Setters

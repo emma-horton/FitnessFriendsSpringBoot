@@ -21,6 +21,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import com.fitnessfriends.repository.StravaAccountRepository;
 import com.fitnessfriends.service.StravaAccountService;
+import com.fitnessfriends.service.goal.GoalTypeStrategy;
+import com.fitnessfriends.service.goal.GoalTypeStrategyFactory;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
@@ -52,6 +55,9 @@ public class VirtualPetService {
 
     // Create a new virtual pet
     public VirtualPet createPet(VirtualPet pet) {
+        if (virtualPetRepository.existsByUserId(pet.getUser().getUserId())) {
+            throw new IllegalArgumentException("Each user can only have one pet.");
+        }
         return virtualPetRepository.save(pet);
     }
 
@@ -96,58 +102,20 @@ public class VirtualPetService {
         logger.debug("Checking if any goal is achieved...");
         logger.debug("Goals: {}", goals);
         logger.debug("Activities: {}", activities);
-    
-        // Get the current date
-        LocalDate today = LocalDate.now();
-        logger.debug("Today's date: {}", today);
-    
-        // Calculate the date 7 days ago
-        LocalDate sevenDaysAgo = today.minusDays(7);
-        logger.debug("Date 7 days ago: {}", sevenDaysAgo);
-    
-        // Define a formatter to parse the activityDate (assuming it's stored as a String in "yyyy-MM-dd" format)
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    
-        // Logic to check if any goal is achieved based on activity data
+
         for (HabitGoal goal : goals) {
             logger.debug("Checking goal: {}", goal);
-    
-            for (ActivityData activity : activities) {
-                logger.debug("Checking activity: {}", activity);
-    
-                // Parse the activityDate to a LocalDate
-                LocalDate activityDate = LocalDate.parse(activity.getActivityDate(), formatter);
-                logger.debug("Parsed activity date: {}", activityDate);
-    
-                // Check if the activity date is within the past 7 days
-                if (!activityDate.isBefore(sevenDaysAgo) && !activityDate.isAfter(today)) {
-                    logger.debug("Activity is within the past 7 days.");
-    
-                    // Check if the activity type matches the goal's sport
-                    if (goal.getSport().equalsIgnoreCase(activity.getActivityType())) {
-                        logger.debug("Activity type matches goal sport: {}", goal.getSport());
-    
-                        // Dynamically fetch the value based on the goal type
-                        String goalType = goal.getGoalType().toLowerCase(); // e.g., "distance" or "duration"
-                        float activityValue = activity.getValue(goalType);
-                        logger.debug("Activity value for goal type '{}': {}", goalType, activityValue);
-    
-                        // Check if the activity value meets or exceeds the goal's target value
-                        if (activityValue >= goal.getTargetValue()) {
-                            logger.debug("Goal achieved! Activity value: {}, Target value: {}", activityValue, goal.getTargetValue());
-                            return true;
-                        } else {
-                            logger.debug("Activity value does not meet the target. Activity value: {}, Target value: {}", activityValue, goal.getTargetValue());
-                        }
-                    } else {
-                        logger.debug("Activity type does not match goal sport. Activity type: {}, Goal sport: {}", activity.getActivityType(), goal.getSport());
-                    }
-                } else {
-                    logger.debug("Activity is not within the past 7 days. Activity date: {}", activityDate);
-                }
+
+            // Get the appropriate strategy for the goal type
+            GoalTypeStrategy strategy = GoalTypeStrategyFactory.getStrategy(goal.getGoalType());
+
+            // Use the strategy to check if the goal is achieved
+            if (strategy.isGoalAchieved(goal, activities)) {
+                logger.debug("Goal achieved: {}", goal);
+                return true;
             }
         }
-    
+
         logger.debug("No goals were achieved.");
         return false;
     }
