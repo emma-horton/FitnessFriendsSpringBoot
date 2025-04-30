@@ -63,4 +63,11 @@ public class VirtualPet {
     public void setUser(User user) {
         this.user = user;
     }
+
+    public void setUserId(int userId) {
+        if (this.user == null) {
+            this.user = new User();
+        }
+        this.user.setUserId(userId);
+    }
 }

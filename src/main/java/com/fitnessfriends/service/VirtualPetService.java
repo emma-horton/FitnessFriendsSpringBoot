@@ -101,11 +101,9 @@ public class VirtualPetService {
         LocalDate today = LocalDate.now();
         logger.debug("Today's date: {}", today);
     
-        // Calculate the start and end of the current week (Monday to Sunday)
-        LocalDate startOfWeek = today.with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
-        LocalDate endOfWeek = today.with(TemporalAdjusters.nextOrSame(java.time.DayOfWeek.SUNDAY));
-        logger.debug("Start of the week: {}", startOfWeek);
-        logger.debug("End of the week: {}", endOfWeek);
+        // Calculate the date 7 days ago
+        LocalDate sevenDaysAgo = today.minusDays(7);
+        logger.debug("Date 7 days ago: {}", sevenDaysAgo);
     
         // Define a formatter to parse the activityDate (assuming it's stored as a String in "yyyy-MM-dd" format)
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -121,9 +119,9 @@ public class VirtualPetService {
                 LocalDate activityDate = LocalDate.parse(activity.getActivityDate(), formatter);
                 logger.debug("Parsed activity date: {}", activityDate);
     
-                // Check if the activity date is within this week
-                if (!activityDate.isBefore(startOfWeek) && !activityDate.isAfter(endOfWeek)) {
-                    logger.debug("Activity is within this week.");
+                // Check if the activity date is within the past 7 days
+                if (!activityDate.isBefore(sevenDaysAgo) && !activityDate.isAfter(today)) {
+                    logger.debug("Activity is within the past 7 days.");
     
                     // Check if the activity type matches the goal's sport
                     if (goal.getSport().equalsIgnoreCase(activity.getActivityType())) {
@@ -145,7 +143,7 @@ public class VirtualPetService {
                         logger.debug("Activity type does not match goal sport. Activity type: {}, Goal sport: {}", activity.getActivityType(), goal.getSport());
                     }
                 } else {
-                    logger.debug("Activity is not within this week. Activity date: {}", activityDate);
+                    logger.debug("Activity is not within the past 7 days. Activity date: {}", activityDate);
                 }
             }
         }
