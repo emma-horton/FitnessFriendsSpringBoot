@@ -14,7 +14,7 @@ public class StravaAccount {
     private int userId;
 
     @Column(nullable = false)
-    private String stravaUserId;
+    private int stravaUserId;
 
     @Column(nullable = false)
     private String accessToken;
@@ -42,11 +42,11 @@ public class StravaAccount {
         this.userId = userId;
     }
 
-    public String getStravaUserId() {
+    public int getStravaUserId() {
         return stravaUserId;
     }
 
-    public void setStravaUserId(String stravaUserId) {
+    public void setStravaUserId(int stravaUserId) {
         this.stravaUserId = stravaUserId;
     }
 

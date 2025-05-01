@@ -20,9 +20,12 @@ public class ActivityDataService {
         if (stravaAccount == null) {
             throw new IllegalArgumentException("No Strava account linked for user with ID: " + userId);
         }
-
-        // Use the access token to fetch activities from Strava
-        return stravaAccountService.fetchActivitiesFromStrava(stravaAccount.getAccessToken());
+    
+        // Ensure the access token is valid (refresh if necessary)
+        String validAccessToken = stravaAccountService.ensureValidAccessToken(stravaAccount);
+    
+        // Use the valid access token to fetch activities from Strava
+        return stravaAccountService.fetchActivitiesFromStravaWithToken(validAccessToken);
     }
 
     // Retrieve activities by type (e.g., "Running", "Cycling")

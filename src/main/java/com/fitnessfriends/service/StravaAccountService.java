@@ -80,7 +80,7 @@ public class StravaAccountService {
             stravaAccount.setUserId(userId);
         }
 
-        stravaAccount.setStravaUserId(tokenResponse.getStravaUserId());
+        stravaAccount.setStravaUserId(userId);
         stravaAccount.setAccessToken(tokenResponse.getAccessToken());
         stravaAccount.setRefreshToken(tokenResponse.getRefreshToken());
         stravaAccount.setExpiresAt(tokenResponse.getExpiresAt());
@@ -99,20 +99,68 @@ public class StravaAccountService {
         return stravaAccountRepository.save(stravaAccount);
     }
 
-    public List<ActivityData> fetchActivitiesFromStrava(String accessToken) {
-        RestTemplate restTemplate = new RestTemplate();
+    public String ensureValidAccessToken(StravaAccount stravaAccount) {
+        if (stravaAccount == null) {
+            logger.error("StravaAccount is null");
+            throw new IllegalArgumentException("StravaAccount cannot be null");
+        }
+    
+        logger.debug("StravaAccount details: userId={}, refreshToken={}, expiresAt={}, accessToken={}",
+                stravaAccount.getUserId(),
+                stravaAccount.getRefreshToken(),
+                stravaAccount.getExpiresAt(),
+                stravaAccount.getAccessToken());
+    
+        if (stravaAccount.getExpiresAt() <= System.currentTimeMillis() / 1000) {
+            logger.debug("Access token expired. Refreshing token...");
+            try {
+                StravaTokenResponse tokenResponse = refreshAccessToken(stravaAccount.getRefreshToken());
+                logger.debug("Refreshed token response: accessToken={}, refreshToken={}, expiresAt={}",
+                        tokenResponse.getAccessToken(),
+                        tokenResponse.getRefreshToken(),
+                        tokenResponse.getExpiresAt());
+    
+                saveStravaTokens(stravaAccount.getUserId(), tokenResponse);
+                return tokenResponse.getAccessToken();
+            } catch (Exception e) {
+                logger.error("Failed to refresh access token: {}", e.getMessage());
+                throw new RuntimeException("Failed to refresh access token", e);
+            }
+        }
+    
+        return stravaAccount.getAccessToken();
+    }
 
+    public List<ActivityData> fetchActivitiesFromStrava(int userId) {
+        // Retrieve the Strava account for the user
+        StravaAccount stravaAccount = getStravaAccountByUserId(userId);
+    
+        if (stravaAccount == null) {
+            throw new IllegalArgumentException("No Strava account linked for user ID: " + userId);
+        }
+    
+        // Ensure the access token is valid
+        String accessToken = ensureValidAccessToken(stravaAccount);
+        logger.debug("checking access token exists", stravaAccount.getAccessToken());
+    
+        // Use the valid access token to fetch activities
+        return fetchActivitiesFromStravaWithToken(accessToken);
+    }
+
+    public List<ActivityData> fetchActivitiesFromStravaWithToken(String accessToken) {
+        RestTemplate restTemplate = new RestTemplate();
+    
         // Set the headers
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken); // Add the access token as a Bearer token
         headers.setContentType(MediaType.APPLICATION_JSON);
-
+    
         // Create the HTTP entity with headers
         HttpEntity<String> httpEntity = new HttpEntity<>(headers);
-
+    
         // Define the Strava API endpoint for fetching activities
         String url = "https://www.strava.com/api/v3/athlete/activities?per_page=50";
-
+    
         // Send the GET request to Strava's API
         ResponseEntity<String> response = restTemplate.exchange(
                 url,
@@ -120,10 +168,10 @@ public class StravaAccountService {
                 httpEntity,
                 String.class // Fetch the raw JSON response as a string
         );
-
+    
         // Log the raw JSON response
         logger.debug("Raw JSON response from Strava API: {}", response.getBody());
-
+    
         // Parse and process the JSON response
         List<ActivityData> activityDataList = new ArrayList<>();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -140,7 +188,7 @@ public class StravaAccountService {
                     String activityType = activity.get("type").asText().toUpperCase(); // Convert to uppercase
                     float activityDuration = activity.get("elapsed_time").asInt() / 60.0f; // Convert seconds to minutes
                     float activityDistance = activity.get("distance").asInt() / 1000.0f; // Convert meters to kilometers
-
+    
                     // Create an ActivityData object
                     ActivityData activityData = new ActivityData();
                     activityData.setDataId(dataId);
@@ -148,7 +196,7 @@ public class StravaAccountService {
                     activityData.setActivityType(activityType);
                     activityData.setActivityDuration(activityDuration);
                     activityData.setActivityDistance(activityDistance);
-
+    
                     // Add to the list
                     activityDataList.add(activityData);
                 } catch (Exception e) {
@@ -159,7 +207,44 @@ public class StravaAccountService {
             logger.error("Failed to parse JSON response: {}", e.getMessage());
             throw new RuntimeException("Failed to fetch activities from Strava", e);
         }
-
+    
         return activityDataList;
+    }
+    
+    public StravaTokenResponse refreshAccessToken(String refreshToken) throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+    
+        // Prepare the request payload
+        MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
+        requestBody.add("client_id", "153559");
+        requestBody.add("client_secret", "4af20622bdca9abe169f54226bdb9327c3a32a91");
+        requestBody.add("grant_type", "refresh_token");
+        requestBody.add("refresh_token", refreshToken);
+
+        logger.debug("Using refresh token: {}", refreshToken);
+    
+        // Set the headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+    
+        // Create the HTTP entity with headers and payload
+        HttpEntity<MultiValueMap<String, String>> httpEntity = new HttpEntity<>(requestBody, headers);
+    
+        // Send the POST request to Strava's token endpoint
+        ResponseEntity<StravaTokenResponse> response = restTemplate.postForEntity(
+                "https://www.strava.com/oauth/token",
+                httpEntity,
+                StravaTokenResponse.class
+        );
+    
+        // Log the response for debugging
+        logger.debug("Response status code: {}", response.getStatusCode());
+        logger.debug("Response body: {}", response.getBody());
+    
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new Exception("Failed to refresh access token: " + response.getBody());
+        }
+    
+        return response.getBody();
     }
 }

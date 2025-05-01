@@ -55,9 +55,9 @@ public class VirtualPetService {
 
     // Create a new virtual pet
     public VirtualPet createPet(VirtualPet pet) {
-        if (virtualPetRepository.existsByUserId(pet.getUser().getUserId())) {
-            throw new IllegalArgumentException("Each user can only have one pet.");
-        }
+        // if (virtualPetRepository.existsByUserId(pet.getUser().getUserId())) {
+        //     throw new IllegalArgumentException("Each user can only have one pet.");
+        // }
         return virtualPetRepository.save(pet);
     }
 
@@ -75,9 +75,14 @@ public class VirtualPetService {
             throw new IllegalArgumentException("No Strava account linked for user with ID: " + userId);
         }
         logger.debug("Fetched Strava account: {}", stravaAccount);
+        logger.debug("Access token: {}", stravaAccount.getAccessToken());
     
-        // Fetch activity data from Strava
-        List<ActivityData> activities = stravaAccountService.fetchActivitiesFromStrava(stravaAccount.getAccessToken());
+        // Ensure the access token is valid (refresh if necessary)
+        String validAccessToken = stravaAccountService.ensureValidAccessToken(stravaAccount);
+        logger.debug("Validated access token: {}", validAccessToken);
+    
+        // Fetch activity data from Strava using the valid access token
+        List<ActivityData> activities = stravaAccountService.fetchActivitiesFromStravaWithToken(validAccessToken);
         logger.debug("Fetched activities: {}", activities);
     
         // Fetch the user's goals
