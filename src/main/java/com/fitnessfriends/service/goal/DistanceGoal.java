@@ -28,4 +28,25 @@ public class DistanceGoal implements GoalTypeStrategy {
 
         return totalDistance >= goal.getTargetValue();
     }
+
+    @Override
+    public boolean wasLastWeeksGoalAchieved(HabitGoal goal, List<ActivityData> activities) {
+        LocalDate today = LocalDate.now();
+        LocalDate fourteenDaysAgo = today.minusDays(14);
+        LocalDate sevenDaysAgo = today.minusDays(7);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        float totalDistance = 0;
+
+        for (ActivityData activity : activities) {
+            LocalDate activityDate = LocalDate.parse(activity.getActivityDate(), formatter);
+
+            if (!activityDate.isBefore(fourteenDaysAgo) && activityDate.isBefore(sevenDaysAgo)
+                    && goal.getSport().equalsIgnoreCase(activity.getActivityType())) {
+                totalDistance += activity.getActivityDistance();
+            }
+        }
+
+        return totalDistance >= goal.getTargetValue();
+    }
 }

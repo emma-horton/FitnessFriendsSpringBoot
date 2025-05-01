@@ -63,44 +63,68 @@ public class VirtualPetService {
 
     public VirtualPet getPetWithHealthByUserId(int userId) {
         logger.debug("Fetching pet for user ID: {}", userId);
-    
+
         // Fetch the single pet for the user
         VirtualPet pet = virtualPetRepository.findByUser_UserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("No pet found for user with ID: " + userId));
         logger.debug("Fetched pet: {}", pet);
-    
+
         // Fetch the user's Strava account to get the access token
-        StravaAccount stravaAccount = stravaAccountRepository.findByUserId(userId);
+        StravaAccount stravaAccount = stravaAccountService.getStravaAccountByUserId(userId);
         if (stravaAccount == null) {
             throw new IllegalArgumentException("No Strava account linked for user with ID: " + userId);
         }
         logger.debug("Fetched Strava account: {}", stravaAccount);
-        logger.debug("Access token: {}", stravaAccount.getAccessToken());
-    
+
         // Ensure the access token is valid (refresh if necessary)
         String validAccessToken = stravaAccountService.ensureValidAccessToken(stravaAccount);
         logger.debug("Validated access token: {}", validAccessToken);
-    
+
         // Fetch activity data from Strava using the valid access token
         List<ActivityData> activities = stravaAccountService.fetchActivitiesFromStravaWithToken(validAccessToken);
         logger.debug("Fetched activities: {}", activities);
-    
+
         // Fetch the user's goals
         List<HabitGoal> goals = habitGoalRepository.findByUserId(userId);
         logger.debug("Fetched goals: {}", goals);
-    
-        // Check if any goal is achieved
-        boolean goalAchieved = isGoalAchieved(goals, activities);
-        logger.debug("Goal achieved: {}", goalAchieved);
-    
-        // Calculate health based on goal achievement
-        String healthStatus = calculateHealth(goalAchieved);
-        logger.debug("Calculated health status: {}", healthStatus);
-    
-        // Assign health to the pet
-        pet.setHealthStatus(healthStatus);
-    
+
+        // Update pet health based on goals
+        updatePetHealth(pet, goals, activities);
+
         return pet;
+    }
+
+    private void updatePetHealth(VirtualPet pet, List<HabitGoal> goals, List<ActivityData> activities) {
+        boolean allGoalsAchievedThisWeek = areAllGoalsAchievedThisWeek(goals, activities);
+        boolean someGoalsAchievedThisWeek = areSomeGoalsAchievedThisWeek(goals, activities);
+        boolean allGoalsMissedForTwoWeeks = areAllGoalsMissedForTwoWeeks(goals, activities);
+
+        if (allGoalsAchievedThisWeek) {
+            pet.setHealthStatus("Healthy");
+            logger.debug("Pet health updated to: Healthy");
+        } else if (someGoalsAchievedThisWeek) {
+            pet.setHealthStatus("Sick");
+            logger.debug("Pet health updated to: Sick");
+        } else if (allGoalsMissedForTwoWeeks) {
+            pet.setHealthStatus("Dead");
+            logger.debug("Pet health updated to: Dead");
+        }
+    }
+
+    private boolean areAllGoalsAchievedThisWeek(List<HabitGoal> goals, List<ActivityData> activities) {
+        return goals.stream()
+                .allMatch(goal -> GoalTypeStrategyFactory.getStrategy(goal.getGoalType()).isGoalAchieved(goal, activities));
+    }
+
+    private boolean areSomeGoalsAchievedThisWeek(List<HabitGoal> goals, List<ActivityData> activities) {
+        return goals.stream()
+                .anyMatch(goal -> GoalTypeStrategyFactory.getStrategy(goal.getGoalType()).isGoalAchieved(goal, activities));
+    }
+
+    private boolean areAllGoalsMissedForTwoWeeks(List<HabitGoal> goals, List<ActivityData> activities) {
+        return goals.stream()
+                .noneMatch(goal -> GoalTypeStrategyFactory.getStrategy(goal.getGoalType()).isGoalAchieved(goal, activities)
+                        || GoalTypeStrategyFactory.getStrategy(goal.getGoalType()).wasLastWeeksGoalAchieved(goal, activities));
     }
 
     private boolean isGoalAchieved(List<HabitGoal> goals, List<ActivityData> activities) {

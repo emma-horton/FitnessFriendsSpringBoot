@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface GoalTypeStrategy {
     boolean isGoalAchieved(HabitGoal goal, List<ActivityData> activities);
+    boolean wasLastWeeksGoalAchieved(HabitGoal goal, List<ActivityData> activities); 
 }

@@ -29,4 +29,25 @@ public class FrequencyGoal implements GoalTypeStrategy {
 
         return uniqueDays.size() >= goal.getTargetValue();
     }
+
+    @Override
+    public boolean wasLastWeeksGoalAchieved(HabitGoal goal, List<ActivityData> activities) {
+        LocalDate today = LocalDate.now();
+        LocalDate fourteenDaysAgo = today.minusDays(14);
+        LocalDate sevenDaysAgo = today.minusDays(7);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        Set<LocalDate> uniqueDays = new HashSet<>();
+
+        for (ActivityData activity : activities) {
+            LocalDate activityDate = LocalDate.parse(activity.getActivityDate(), formatter);
+
+            if (!activityDate.isBefore(fourteenDaysAgo) && activityDate.isBefore(sevenDaysAgo)
+                    && goal.getSport().equalsIgnoreCase(activity.getActivityType())) {
+                uniqueDays.add(activityDate);
+            }
+        }
+
+        return uniqueDays.size() >= goal.getTargetValue();
+    }
 }
