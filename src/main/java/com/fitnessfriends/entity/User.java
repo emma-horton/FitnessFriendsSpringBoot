@@ -1,24 +1,21 @@
 package com.fitnessfriends.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "Users") // Maps to the "Users" table in the database
+@Table(name = "Users") 
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-increment primary key
+    @GeneratedValue(strategy = GenerationType.IDENTITY) 
     private int userId;
 
-    @Column(nullable = false, unique = true) // Maps to the "username" column
+    @Column(nullable = false, unique = true) 
     private String username;
 
-    @Column(nullable = false) // Maps to the "password" column
+    @Column(nullable = false) 
     private String password;
 
-    // Getters and Setters
     public int getUserId() {
         return userId;
     }

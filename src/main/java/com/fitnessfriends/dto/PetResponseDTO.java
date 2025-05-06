@@ -6,7 +6,7 @@ public class PetResponseDTO {
     private String petName;
     private String petType;
     private PetHealthStatus healthStatus;
-    private String behavior; // Add a field for behavior
+    private String behavior; 
 
     public PetResponseDTO() {}
 

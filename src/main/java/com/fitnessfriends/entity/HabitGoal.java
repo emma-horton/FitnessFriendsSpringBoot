@@ -22,7 +22,6 @@ public class HabitGoal {
     @Column(nullable = false)
     private float targetValue;
 
-    // Getters and Setters
     public int getGoalId() {
         return goalId;
     }

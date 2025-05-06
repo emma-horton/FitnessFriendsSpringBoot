@@ -25,7 +25,6 @@ public class StravaAccount {
     @Column(nullable = false)
     private long expiresAt;
 
-    // Getters and Setters
     public int getAccountId() {
         return accountId;
     }

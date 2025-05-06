@@ -19,7 +19,6 @@ public class ActivityData {
     @JsonProperty("elapsed_time")
     private float activityDuration;
 
-    // Getters and Setters
     public int getDataId() {
         return dataId;
     }

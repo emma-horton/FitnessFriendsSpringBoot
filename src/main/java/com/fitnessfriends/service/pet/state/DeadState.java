@@ -5,8 +5,6 @@ import com.fitnessfriends.entity.VirtualPet;
 public class DeadState implements PetState {
     @Override
     public String displayBehavior(VirtualPet pet) {
-
-        // Combine the outputs into a single string
         return "RIP";
     }
 

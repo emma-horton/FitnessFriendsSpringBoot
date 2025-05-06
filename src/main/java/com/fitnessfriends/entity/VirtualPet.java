@@ -24,7 +24,6 @@ public class VirtualPet {
     @Transient // Not persisted in the database
     private PetBehaviour behaviour;
 
-    // Getters and Setters
     public PetBehaviour getBehaviour() {
         return behaviour;
     }
@@ -34,10 +33,9 @@ public class VirtualPet {
     }
 
     @ManyToOne // Many pets can belong to one user
-    @JoinColumn(name = "userId", nullable = false, unique = true) // Foreign key to the "Users" table
+    @JoinColumn(name = "userId", nullable = false, unique = true) 
     private User user;
 
-    // Getters and Setters
     public int getPetId() {
         return petId;
     }
