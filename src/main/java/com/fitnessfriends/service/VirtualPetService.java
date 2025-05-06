@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import com.fitnessfriends.repository.StravaAccountRepository;
 import com.fitnessfriends.service.goal.GoalTypeStrategyFactory;
 import com.fitnessfriends.service.pet.PetBehaviour;
+import com.fitnessfriends.service.pet.PetFactory;
+
 import java.util.List;
 
 import com.fitnessfriends.service.pet.PetHealthStatus;
@@ -69,24 +71,14 @@ public class VirtualPetService {
     }
 
     private VirtualPet createPetInstance(VirtualPet pet) {
-        switch (pet.getPetType().toUpperCase()) {
-            case "TURTLE":
-                Turtle turtle = new Turtle();
-                turtle.setPetId(pet.getPetId());
-                turtle.setPetName(pet.getPetName());
-                turtle.setPetType(pet.getPetType());
-                turtle.setHealthStatus(pet.getHealthStatus());
-                return turtle;
-            case "PARROT":
-                Parrot parrot = new Parrot();
-                parrot.setPetId(pet.getPetId());
-                parrot.setPetName(pet.getPetName());
-                parrot.setPetType(pet.getPetType());
-                parrot.setHealthStatus(pet.getHealthStatus());
-                return parrot;
-            default:
-                return pet; // Default to VirtualPet if no specific type is found
-        }
+        // Delegate to PetFactory for creating the correct subclass
+        PetBehaviour petBehaviour = PetFactory.createPet(
+                pet.getPetType(),
+                pet.getPetId(),
+                pet.getHealthStatus(),
+                pet.getPetName()
+        );
+        return petBehaviour.getPet();
     }
 
     private void updatePetHealth(VirtualPet pet, List<HabitGoal> goals, List<ActivityData> activities) {

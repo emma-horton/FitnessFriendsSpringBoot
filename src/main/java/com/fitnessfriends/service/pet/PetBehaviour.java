@@ -14,6 +14,10 @@ public class PetBehaviour {
         updateState();
     }
 
+    public VirtualPet getPet() {
+        return pet;
+    }
+
     public void updateState() {
         switch (pet.getHealthStatus()) { 
             case HEALTHY:
