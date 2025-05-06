@@ -1,9 +1,7 @@
 package com.fitnessfriends.service;
 
-import com.fitnessfriends.controller.UserController;
 import com.fitnessfriends.entity.ActivityData;
 import com.fitnessfriends.entity.HabitGoal;
-import com.fitnessfriends.entity.StravaAccount;
 import com.fitnessfriends.entity.VirtualPet;
 import com.fitnessfriends.repository.HabitGoalRepository;
 import com.fitnessfriends.repository.VirtualPetRepository;
@@ -11,24 +9,15 @@ import com.fitnessfriends.repository.VirtualPetRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import com.fitnessfriends.repository.StravaAccountRepository;
-import com.fitnessfriends.service.StravaAccountService;
-import com.fitnessfriends.service.goal.GoalTypeStrategy;
 import com.fitnessfriends.service.goal.GoalTypeStrategyFactory;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
-import java.util.Arrays;
+import com.fitnessfriends.service.pet.PetBehaviour;
 import java.util.List;
+
+import com.fitnessfriends.service.pet.PetHealthStatus;
+import com.fitnessfriends.service.pet.type.Parrot;
+import com.fitnessfriends.service.pet.type.Turtle;
 
 @Service
 public class VirtualPetService {
@@ -53,45 +42,51 @@ public class VirtualPetService {
                 .orElseThrow(() -> new IllegalArgumentException("No pet found for user with ID: " + userId));
     }
 
-    // Create a new virtual pet
-    public VirtualPet createPet(VirtualPet pet) {
-        // if (virtualPetRepository.existsByUserId(pet.getUser().getUserId())) {
-        //     throw new IllegalArgumentException("Each user can only have one pet.");
-        // }
-        return virtualPetRepository.save(pet);
-    }
-
     public VirtualPet getPetWithHealthByUserId(int userId) {
-        logger.debug("Fetching pet for user ID: {}", userId);
-
-        // Fetch the single pet for the user
+        // Fetch the pet from the repository
         VirtualPet pet = virtualPetRepository.findByUser_UserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("No pet found for user with ID: " + userId));
-        logger.debug("Fetched pet: {}", pet);
 
-        // Fetch the user's Strava account to get the access token
-        StravaAccount stravaAccount = stravaAccountService.getStravaAccountByUserId(userId);
-        if (stravaAccount == null) {
-            throw new IllegalArgumentException("No Strava account linked for user with ID: " + userId);
-        }
-        logger.debug("Fetched Strava account: {}", stravaAccount);
+        // Use the factory method to create the correct subclass
+        pet = createPetInstance(pet);
 
-        // Ensure the access token is valid (refresh if necessary)
-        String validAccessToken = stravaAccountService.ensureValidAccessToken(stravaAccount);
-        logger.debug("Validated access token: {}", validAccessToken);
-
-        // Fetch activity data from Strava using the valid access token
-        List<ActivityData> activities = stravaAccountService.fetchActivitiesFromStravaWithToken(validAccessToken);
-        logger.debug("Fetched activities: {}", activities);
-
-        // Fetch the user's goals
+        // Fetch activity data and goals
+        List<ActivityData> activities = stravaAccountService.fetchActivitiesFromStravaWithToken(
+                stravaAccountService.ensureValidAccessToken(
+                        stravaAccountService.getStravaAccountByUserId(userId)
+                )
+        );
         List<HabitGoal> goals = habitGoalRepository.findByUserId(userId);
-        logger.debug("Fetched goals: {}", goals);
 
-        // Update pet health based on goals
+        // Update pet health
         updatePetHealth(pet, goals, activities);
 
+        // Set the pet's behavior
+        PetBehaviour petBehaviour = new PetBehaviour(pet);
+        pet.setBehaviour(petBehaviour);
+
         return pet;
+    }
+
+    private VirtualPet createPetInstance(VirtualPet pet) {
+        switch (pet.getPetType().toUpperCase()) {
+            case "TURTLE":
+                Turtle turtle = new Turtle();
+                turtle.setPetId(pet.getPetId());
+                turtle.setPetName(pet.getPetName());
+                turtle.setPetType(pet.getPetType());
+                turtle.setHealthStatus(pet.getHealthStatus());
+                return turtle;
+            case "PARROT":
+                Parrot parrot = new Parrot();
+                parrot.setPetId(pet.getPetId());
+                parrot.setPetName(pet.getPetName());
+                parrot.setPetType(pet.getPetType());
+                parrot.setHealthStatus(pet.getHealthStatus());
+                return parrot;
+            default:
+                return pet; // Default to VirtualPet if no specific type is found
+        }
     }
 
     private void updatePetHealth(VirtualPet pet, List<HabitGoal> goals, List<ActivityData> activities) {
@@ -100,15 +95,16 @@ public class VirtualPetService {
         boolean allGoalsMissedForTwoWeeks = areAllGoalsMissedForTwoWeeks(goals, activities);
 
         if (allGoalsAchievedThisWeek) {
-            pet.setHealthStatus("Healthy");
-            logger.debug("Pet health updated to: Healthy");
+            pet.setHealthStatus(PetHealthStatus.HEALTHY);
         } else if (someGoalsAchievedThisWeek) {
-            pet.setHealthStatus("Sick");
-            logger.debug("Pet health updated to: Sick");
+            pet.setHealthStatus(PetHealthStatus.SICK);
         } else if (allGoalsMissedForTwoWeeks) {
-            pet.setHealthStatus("Dead");
-            logger.debug("Pet health updated to: Dead");
+            pet.setHealthStatus(PetHealthStatus.DEAD);
         }
+
+        // Update the pet's state
+        PetBehaviour petBehaviour = new PetBehaviour(pet);
+        petBehaviour.updateState();
     }
 
     private boolean areAllGoalsAchievedThisWeek(List<HabitGoal> goals, List<ActivityData> activities) {
@@ -125,37 +121,5 @@ public class VirtualPetService {
         return goals.stream()
                 .noneMatch(goal -> GoalTypeStrategyFactory.getStrategy(goal.getGoalType()).isGoalAchieved(goal, activities)
                         || GoalTypeStrategyFactory.getStrategy(goal.getGoalType()).wasLastWeeksGoalAchieved(goal, activities));
-    }
-
-    private boolean isGoalAchieved(List<HabitGoal> goals, List<ActivityData> activities) {
-        logger.debug("Checking if any goal is achieved...");
-        logger.debug("Goals: {}", goals);
-        logger.debug("Activities: {}", activities);
-
-        for (HabitGoal goal : goals) {
-            logger.debug("Checking goal: {}", goal);
-
-            // Get the appropriate strategy for the goal type
-            GoalTypeStrategy strategy = GoalTypeStrategyFactory.getStrategy(goal.getGoalType());
-
-            // Use the strategy to check if the goal is achieved
-            if (strategy.isGoalAchieved(goal, activities)) {
-                logger.debug("Goal achieved: {}", goal);
-                return true;
-            }
-        }
-
-        logger.debug("No goals were achieved.");
-        return false;
-    }
-
-    private String calculateHealth(boolean goalAchieved) {
-        // Logic to calculate health based on goal achievement
-        return goalAchieved ? "Healthy" : "Sick";
-    }
-
-    private void outputPetBehavior(VirtualPet pet) {
-        // Logic to output pet behavior based on health
-        System.out.println("Pet: " + pet.getPetName() + ", Health: " + pet.getHealthStatus());
     }
 }

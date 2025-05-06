@@ -1,11 +1,12 @@
 package com.fitnessfriends.entity;
 
 import jakarta.persistence.*;
+import com.fitnessfriends.service.pet.PetBehaviour;
+import com.fitnessfriends.service.pet.PetHealthStatus;
 
 @Entity
 @Table(name = "VirtualPets")
 public class VirtualPet {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int petId;
@@ -17,7 +18,20 @@ public class VirtualPet {
     private String petType;
 
     @Column(nullable = false)
-    private String healthStatus;
+    @Enumerated(EnumType.STRING)
+    private PetHealthStatus healthStatus;
+
+    @Transient // Not persisted in the database
+    private PetBehaviour behaviour;
+
+    // Getters and Setters
+    public PetBehaviour getBehaviour() {
+        return behaviour;
+    }
+
+    public void setBehaviour(PetBehaviour behaviour) {
+        this.behaviour = behaviour;
+    }
 
     @ManyToOne // Many pets can belong to one user
     @JoinColumn(name = "userId", nullable = false, unique = true) // Foreign key to the "Users" table
@@ -48,11 +62,11 @@ public class VirtualPet {
         this.petType = petType;
     }
 
-    public String getHealthStatus() {
+    public PetHealthStatus getHealthStatus() {
         return healthStatus;
     }
 
-    public void setHealthStatus(String healthStatus) {
+    public void setHealthStatus(PetHealthStatus healthStatus) {
         this.healthStatus = healthStatus;
     }
 
@@ -69,5 +83,25 @@ public class VirtualPet {
             this.user = new User();
         }
         this.user.setUserId(userId);
+    }
+
+    // Default implementations for behaviors
+    public String move() {
+        return "Default move behavior for VirtualPet.";
+    }
+
+    public String eat() {
+        return "Default eat behavior for VirtualPet.";
+    }
+
+    public String play() {
+        return "Default play behavior for VirtualPet.";
+    }
+
+    public String hibernate() {
+        return "Default hibernate behavior for VirtualPet.";
+    }
+    public String sleep() {
+        return "Default sleep behavior for VirtualPet.";
     }
 }
