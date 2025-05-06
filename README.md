@@ -1,4 +1,4 @@
-# Fitness Friends Spring Boot
+# Fitness Friends
 
 **Fitness Friends** is a virtual pet application designed to make fitness tracking fun and engaging. By integrating with the Strava API, the app allows users to track their fitness activities, set goals, and care for a virtual pet whose health and behavior are influenced by the user's progress. Whether you're using a Garmin device, another fitness tracker, or no tracker at all, Fitness Friends provides a unique way to stay motivated on your fitness journey.
 
