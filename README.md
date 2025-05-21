@@ -22,40 +22,6 @@
 - **Strava API**: Sync fitness data from multiple trackers.
 - **PlantUML**: UML diagrams for design documentation.
 - **Maven**: Build and dependency management.
-  
-## Project Structure 
-```bash
-FitnessFriendsSpringBoot/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   ├── com/
-│   │   │   │   ├── fitnessfriends/
-│   │   │   │   │   ├── controller/          # REST API controllers
-│   │   │   │   │   ├── dto/                 # Data Transfer Objects (DTOs)
-│   │   │   │   │   ├── entity/              # JPA entities for database mapping
-│   │   │   │   │   ├── repository/          # Spring Data JPA repositories
-│   │   │   │   │   ├── service/             # Business logic and services
-│   │   │   │   │   │   ├── pet/             # Pet-related logic
-│   │   │   │   │   │   ├── goal/            # Goal evaluation strategies
-│   │   │   │   │   ├── config/              # Application configuration
-│   │   │   │   │   ├── utils/               # Utility classes
-│   │   │   │   │   ├── FitnessFriendsApplication.java # Main application entry point
-│   │   ├── resources/
-│   ├── test/
-│   │   ├── java/
-│   │   │   ├── com/
-│   │   │   │   ├── fitnessfriends/
-│   │   │   │   │   ├── controller/          # Controller tests
-│   │   │   │   │   ├── service/             # Service tests
-│   │   │   │   │   ├── repository/          # Repository tests
-│   │   │   │   │   ├── entity/              # Entity tests
-├── pom.xml                                  # Maven configuration file
-├── README.md                                # Project documentation
-├── mvnw                                     # Maven wrapper script (Linux/Mac)
-├── mvnw.cmd                                 # Maven wrapper script (Windows)
-```
-
 
 ## **Design Patterns Implemented**
 This project leverages several software design patterns to ensure a robust, maintainable, and scalable architecture:
@@ -126,3 +92,36 @@ http://localhost:8080/h2-console
 
 JDBC URL: jdbc:h2:file:./data/fitness-friends
 username: sa
+
+## Project Structure 
+```bash
+FitnessFriendsSpringBoot/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   ├── com/
+│   │   │   │   ├── fitnessfriends/
+│   │   │   │   │   ├── controller/          # REST API controllers
+│   │   │   │   │   ├── dto/                 # Data Transfer Objects (DTOs)
+│   │   │   │   │   ├── entity/              # JPA entities for database mapping
+│   │   │   │   │   ├── repository/          # Spring Data JPA repositories
+│   │   │   │   │   ├── service/             # Business logic and services
+│   │   │   │   │   │   ├── pet/             # Pet-related logic
+│   │   │   │   │   │   ├── goal/            # Goal evaluation strategies
+│   │   │   │   │   ├── config/              # Application configuration
+│   │   │   │   │   ├── utils/               # Utility classes
+│   │   │   │   │   ├── FitnessFriendsApplication.java # Main application entry point
+│   │   ├── resources/
+│   ├── test/
+│   │   ├── java/
+│   │   │   ├── com/
+│   │   │   │   ├── fitnessfriends/
+│   │   │   │   │   ├── controller/          # Controller tests
+│   │   │   │   │   ├── service/             # Service tests
+│   │   │   │   │   ├── repository/          # Repository tests
+│   │   │   │   │   ├── entity/              # Entity tests
+├── pom.xml                                  # Maven configuration file
+├── README.md                                # Project documentation
+├── mvnw                                     # Maven wrapper script (Linux/Mac)
+├── mvnw.cmd                                 # Maven wrapper script (Windows)
+```
