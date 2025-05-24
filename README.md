@@ -25,9 +25,12 @@
 
 ## **Design Patterns Implemented**
 This project leverages several software design patterns to ensure a robust, maintainable, and scalable architecture:
-1. **Abstract Factory Pattern**: For generating sport-specific fitness goals (e.g., Running, Cycling, Swimming).
-2. **State Pattern**: For managing dynamic pet behaviors (e.g., Healthy, Sick, Dead).
 
+### **Abstract Factory Pattern**: For generating sport-specific fitness goals (e.g., Running, Cycling, Swimming).
+
+### **State Pattern**: For managing dynamic pet behaviors (e.g., Healthy, Sick, Dead).
+- **Concrete States (HealthyState, SickState, DeadState) implement the PetState interface.** This design follows the Interface Segregation Principle by ensuring consistency across all states. Each state is required to implement the methods: move(), eat(), and play().
+- **PetBehaviour class inherits from both the Pet class and the PetState interface.** It leverages attributes such as petID, name, and type defined in the Pet class, while its behavior dynamically depends on the current PetState (e.g., healthy, sick, or dead).
 
 ## **Setup and Installation**
 
